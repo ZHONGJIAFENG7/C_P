@@ -16,22 +16,13 @@ struct board
 struct eighttile
 {
   struct board *q;
-  char dist[SIZE][SIZE];
+  char dist[N][SIZE];
   struct board start;
   int first;
   int end;
   int min_step;
   int finish_pos;
 };
-
-struct NCURS_Simplewin
-{
-  bool finished;
-  unsigned long attr[256]; /* Atrributes for each character */
-  short pair[256];         /* Which Colour pair for each character */
-  unsigned short pairsdefd;
-};
-typedef struct NCURS_Simplewin NCURS_Simplewin;
 
 struct board get_snapshot(FILE *fp);
 void add(struct eighttile *e, struct board b);
@@ -320,17 +311,17 @@ void show_board(struct eighttile *e, struct board b, int step)
   int ds;
 
   ds = step * SIZE;
-  for (j = ds; j < ds + SIZE; j++)
+  for (i = ds; i < ds + SIZE; i++)
   {
-    for (i = 0; i < SIZE; i++)
+    for (j = 0; j < SIZE; j++)
     {
-      e->dist[j][i] = ' ';
+      e->dist[i][j] = ' ';
     }
   }
 
-  for (j = 0; j < SIZE; j++)
+  for (i = ds; i < ds + SIZE; i++)
   {
-    for (i = ds; i < ds + SIZE; i++)
+    for (j = 0; j < SIZE; j++)
     {
       if (b.chess[(i - ds) * SIZE + j] == 0)
       {
@@ -372,6 +363,8 @@ void animation(struct eighttile e)
     moving_and_sleeping(&(e.dist[i][0]), SIZE, SIZE);
     i += SIZE;
   } while (e.min_step--);
+
+  endwin();
 }
 
 void moving_and_sleeping(char *a, int width, int height)
