@@ -3,7 +3,6 @@
 #include <string.h>
 #define SIZE 3
 #define N 1000000
-int COUNT = 0;
 
 struct board
 {
@@ -19,7 +18,7 @@ struct eighttile
   int first;
   int end;
   int min_step;
-  int best_pos;
+  int finish_pos;
 };
 
 struct board get_snapshot(FILE *fp);
@@ -55,11 +54,15 @@ int main(int argc, char *argv[])
   memset(e.q, 0, sizeof(struct board) * N);
   e.first = 0;
   e.end = 0;
+  e.min_step = N;
+  e.finish_pos = 0;
 
   start = get_snapshot(fp);
   start.prev = -1;
   add(&e, start);
   search_path(&e);
+  printf("step in total: %d\n", e.min_step);
+  printf("%d", e.finish_pos);
 
   fclose(fp);
 
@@ -71,7 +74,6 @@ struct board get_snapshot(FILE *fp)
   char ch;
   int i = 0;
   struct board start;
-  struct eighttile e;
 
   /* 获取1-8的数字 */
   while ((ch = fgetc(fp)) != EOF)
@@ -131,15 +133,10 @@ void search_path(struct eighttile *e)
     if (is_solved(b))
     {
       step = get_step(e, e->first - 1);
-      if (COUNT < 1)
-      {
-        COUNT++;
-        printf("%d", step);
-      }
       if (e->min_step > step)
       {
         e->min_step = step;
-        e->best_pos = e->first - 1;
+        e->finish_pos = e->first - 1;
       }
       return;
     }

@@ -3,6 +3,7 @@
 #include <string.h>
 #define SIZE 3
 #define N 1000000
+int COUNT = 0;
 
 struct board
 {
@@ -14,9 +15,12 @@ struct board
 struct eighttile
 {
   struct board *q;
+  char dist[SIZE][SIZE];
   struct board start;
   int first;
   int end;
+  int min_step;
+  int finish_pos;
 };
 
 struct board get_snapshot(FILE *fp);
@@ -27,6 +31,12 @@ int is_solved(struct board b);
 void find_neighbor(struct board b, struct eighttile *e);
 void swap(int *a, int *b);
 int can_insert(struct eighttile *e, struct board b);
+void exchange(struct board b, struct eighttile *e, int i, int j);
+void copy(struct board *dest, struct board *source);
+int get_step(struct eighttile *e, int b);
+void show_path(struct eighttile *e, struct board *b);
+void show_board(struct eighttile *e, struct board b);
+int is_valid(struct board b);
 
 int main(int argc, char *argv[])
 {
@@ -49,13 +59,29 @@ int main(int argc, char *argv[])
   memset(e.q, 0, sizeof(struct board) * N);
   e.first = 0;
   e.end = 0;
+  e.min_step = N;
+  e.finish_pos = 0;
 
   start = get_snapshot(fp);
-  start.prev = -1;
-  add(&e, start);
-  search_path(&e);
+  if (!is_valid(start))
+  {
+    printf("invalid input!\n");
+  }
+  else
+  {
+    start.prev = -1;
+    add(&e, start);
+    search_path(&e);
+    printf("step in total: %d\n", e.min_step);
+    show_path(&e, &(e.q[e.finish_pos]));
+  }
 
   fclose(fp);
+
+  if (e.q)
+  {
+    free(e.q);
+  }
 
   return 0;
 }
@@ -117,12 +143,19 @@ void pop(struct eighttile *e, struct board *b)
 void search_path(struct eighttile *e)
 {
   struct board b;
+  int step;
   while (e->end != e->first)
   {
     pop(e, &b);
     if (is_solved(b))
     {
-      /* TODO */
+      step = get_step(e, e->first - 1);
+      if (e->min_step > step)
+      {
+        e->min_step = step;
+        e->finish_pos = e->first - 1;
+      }
+      return;
     }
     find_neighbor(b, e);
   }
@@ -153,55 +186,25 @@ void find_neighbor(struct board b, struct eighttile *e)
   int i = b.pos / SIZE;
   /* 获取空格所在列 */
   int j = b.pos % SIZE;
-  int i1;
-  int j1;
 
   if (i - 1 >= 0)
   {
-    /*
-    * 1. copy原先镜像
-    * 2. 替换现有的board
-    * 3. 更新pos
-    * 4. 更新prev
-    */
-    /* 1. 保存原先镜像 */
-    struct board nb;
-    int c;
-    for (c = 0; c < SIZE * SIZE; c++)
-    {
-      nb.chess[c] = b.chess[c];
-    }
-    nb.pos = b.pos;
-    nb.prev = b.prev;
-
-    /* swap */
-    swap(&nb.chess[nb.pos], &nb.chess[(i - 1) * SIZE + j]);
-
-    /* 更新pos */
-    nb.pos = (i - 1) * SIZE + j;
-
-    /* 更新prev */
-    nb.prev = e->first - 1;
-
-    /* 打印 */
-    for (i1 = 0; i1 < SIZE; i1++)
-    {
-      for (j1 = 0; j1 < SIZE; j1++)
-      {
-        printf("%d", nb.chess[i1 * SIZE + j1]);
-      }
-      printf("\n");
-    }
-
-    /* 判断当前镜像是否有存在于队列中 */
-    if (can_insert(e, nb))
-    {
-      add(e, nb);
-    }
+    exchange(b, e, i - 1, j);
   }
 
   if (i + 1 < SIZE)
   {
+    exchange(b, e, i + 1, j);
+  }
+
+  if (j - 1 >= 0)
+  {
+    exchange(b, e, i, j - 1);
+  }
+
+  if (j + 1 < SIZE)
+  {
+    exchange(b, e, i, j + 1);
   }
 }
 
@@ -241,4 +244,108 @@ int can_insert(struct eighttile *e, struct board b)
   {
     return 0;
   }
+}
+
+void exchange(struct board b, struct eighttile *e, int i, int j)
+{
+  /* 1. 保存原先镜像 */
+  struct board nb;
+  copy(&nb, &b);
+
+  /* swap */
+  swap(&nb.chess[nb.pos], &nb.chess[i * SIZE + j]);
+
+  /* 更新pos */
+  nb.pos = i * SIZE + j;
+
+  /* 更新prev */
+  nb.prev = e->first - 1;
+
+  /* 判断当前镜像是否有存在于队列中 */
+  if (can_insert(e, nb))
+  {
+    add(e, nb);
+  }
+}
+
+void copy(struct board *dest, struct board *source)
+{
+  int i;
+  for (i = 0; i < SIZE * SIZE; i++)
+  {
+    dest->chess[i] = source->chess[i];
+  }
+  dest->pos = source->pos;
+  dest->prev = source->prev;
+}
+
+int get_step(struct eighttile *e, int b)
+{
+  if (b > 0)
+  {
+    return get_step(e, e->q[b].prev) + 1;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
+void show_path(struct eighttile *e, struct board *b)
+{
+  if (b->prev >= 0)
+  {
+    show_path(e, &(e->q[b->prev]));
+  }
+  show_board(e, *b);
+}
+
+void show_board(struct eighttile *e, struct board b)
+{
+  int i, j;
+  for (j = 0; j < SIZE; j++)
+  {
+    for (i = 0; i < SIZE; i++)
+    {
+      e->dist[j][i] = ' ';
+    }
+  }
+
+  for (j = 0; j < SIZE; j++)
+  {
+    for (i = 0; i < SIZE; i++)
+    {
+      if (b.chess[i * SIZE + j] == 0)
+      {
+        e->dist[i][j] = ' ';
+      }
+      else
+      {
+        e->dist[i][j] = b.chess[i * SIZE + j] + '0';
+      }
+    }
+  }
+  printf("第%d次移动\n", ++COUNT);
+  for (i = 0; i < SIZE; i++)
+  {
+    for (j = 0; j < SIZE; j++)
+    {
+      printf("%c", e->dist[i][j]);
+    }
+    printf("\n");
+  }
+  printf("\n");
+}
+
+int is_valid(struct board b)
+{
+  int i;
+  for (i = 0; i < SIZE * SIZE; i++)
+  {
+    if (b.chess[i] < 0 || b.chess[i] >= SIZE * SIZE)
+    {
+      return 0;
+    }
+  }
+  return 1;
 }

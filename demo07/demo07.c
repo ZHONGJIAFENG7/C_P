@@ -68,7 +68,6 @@ struct board get_snapshot(FILE *fp)
   char ch;
   int i = 0;
   struct board start;
-  struct eighttile e;
 
   /* 获取1-8的数字 */
   while ((ch = fgetc(fp)) != EOF)
