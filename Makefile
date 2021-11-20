@@ -5,13 +5,14 @@ CFLAGS = -Wall -Wextra -Wfloat-equal -ansi -pedantic -lm -lcurses -O2
 
 all: ${dest}
 	${dest}:${src}
-		gcc $^ ${CFLAGS} -o $@
+	gcc $^ ${CFLAGS} -o $@
 
 single:
 	gcc ${basename}.c ${CFLAGS} -o ${basename}.o
 
 clean:
-	rm -f $(dest)
+	rm -f ${dest}
 
 hello:
-	echo $(src2)
+	echo ${src}
+	echo ${dest}
