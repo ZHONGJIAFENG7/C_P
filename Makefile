@@ -14,4 +14,4 @@ clean:
 	rm -f $(dest)
 
 hello:
-	echo $(src2) 
+	echo $(src2)
