@@ -1,6 +1,6 @@
 src = $(wildcard ./*/*.c)
 dest = $(patsubst %.c, %.o, $(src))
-basename = ./demo0${version}/demo0${version}
+basename = ./demo${version}/demo${version}
 CFLAGS = -Wall -Wextra -Wfloat-equal -ansi -pedantic -lm -lcurses -O2
 
 all: ${dest}
