@@ -3,9 +3,11 @@ dest = $(patsubst %.c, %.o, $(src))
 basename = ./demo${version}/demo${version}
 CFLAGS = -Wall -Wextra -Wfloat-equal -ansi -pedantic -lm -lcurses -O2
 
-all: ${dest}
-	${dest}:${src}
-	gcc $^ ${CFLAGS} -o $@
+all: clean mutiple
+
+mutiple:${dest}
+	${src}:${dest}
+	gcc $@ ${CFLAGS} -o $^
 
 single:
 	gcc ${basename}.c ${CFLAGS} -o ${basename}.o
